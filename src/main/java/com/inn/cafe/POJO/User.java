@@ -1,7 +1,7 @@
 package com.inn.cafe.POJO;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,9 +13,6 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import lombok.Data;
 
  
  @NamedQuery(name = "User.findByEmailId", query = "select u from User u where u.email=:email")
