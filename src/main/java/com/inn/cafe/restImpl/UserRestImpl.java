@@ -91,7 +91,7 @@ public class UserRestImpl implements UserRest {
 	}
 
 	@Override
-	public ResponseEntity<String> forgetPassword(Map<String, String> requestMap) {
+	public ResponseEntity<String> forgotPassword(Map<String, String> requestMap) {
 		try {
 			return userService.forgotPassword(requestMap);
 			
