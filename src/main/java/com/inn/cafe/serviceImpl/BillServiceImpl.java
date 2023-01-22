@@ -3,7 +3,9 @@ package com.inn.cafe.serviceImpl;
 import java.io.FileOutputStream;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +20,14 @@ import com.inn.cafe.utils.CafeUtils;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +66,28 @@ public class BillServiceImpl implements BillService{
 				setRectangleInPdf(document);
 				
 				Paragraph chunk = new Paragraph("Cafe Management System", getFont("Header"));
+				chunk.setAlignment(Element.ALIGN_CENTER);
+				document.add(chunk);
+				
+				Paragraph paragraph  = new Paragraph(data + "\n \n" , getFont("Data"));
+				document.add(paragraph);
+				
+				PdfPTable table = new PdfPTable(5);
+				table.setWidthPercentage(100);
+				addTalbeHeader(table);
+				
+				JSONArray jsonArray = CafeUtils.getJSONArrayFromString((String) requestMap.get("productDetails"));
+				for(int i=0; i < jsonArray.length(); i++) {
+					addRows(table, CafeUtils.getMapFrommJson(jsonArray.getString(i)));
+				}
+				document.add(table);
+				Paragraph footer = new Paragraph("Total : " + requestMap.get("totalAmount") + "\n"
+						+ "Thank You For Visiting" , getFont("Data"));
+				document.add(footer);
+				document.close();
+				return new ResponseEntity<>("{\"uuid\":\""+fileName +"\"}", HttpStatus.OK);
+				
+				
 				
 			}
 				return CafeUtils.getResponseEntity("Required Data not found", HttpStatus.BAD_REQUEST);
@@ -71,11 +99,39 @@ public class BillServiceImpl implements BillService{
 		return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
+	private void addRows(PdfPTable table, Map<String, Object> data) {
+		log.info(("inside AddRows"));
+		table.addCell((String) data.get("name"));
+		table.addCell((String) data.get("category"));
+		table.addCell((String) data.get("quantity"));
+		table.addCell(Double.toString((Double) data.get("price")));
+		table.addCell(Double.toString((Double) data.get("total")));
+		
+	}
+
+	private void addTalbeHeader(PdfPTable table) {
+		log.info("Inside TalbeHeader ");
+		
+		Stream.of("Name", "Category", "quantity", "Price", "Sub Total")
+			.forEach(columnTitle -> {
+				PdfPCell header = new PdfPCell();
+				header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+				header.setBorderWidth(2);
+				header.setPhrase(new Phrase(columnTitle));
+				header.setBorderColor(BaseColor.YELLOW);
+				header.setHorizontalAlignment(Element.ALIGN_CENTER);
+				header.setVerticalAlignment(Element.ALIGN_CENTER);
+				table.addCell(header);
+								 
+			});
+		
+	}
+
 	private Font getFont(String type) {
 		log.info("Inside getFont");
 		switch(type) {
 		case "Header" : 
-			Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 0, BaseColor.BLACK);
+			Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 5, BaseColor.BLACK);
 			headerFont.setStyle(Font.BOLD);
 			return headerFont;
 		case "Data":
@@ -96,7 +152,7 @@ public class BillServiceImpl implements BillService{
 		rect.enableBorderSide(4);
 		rect.enableBorderSide(8);
 		
-		rect.setBackgroundColor(BaseColor.BLACK);
+		rect.setBackgroundColor(BaseColor.WHITE);
 		document.add(rect);
 		
 	}
